@@ -1,0 +1,3 @@
+# Placeholder for shadcn/ui components
+# Run `npx shadcn-ui@latest init` to set up shadcn/ui
+# Then add components with `npx shadcn-ui@latest add button`
