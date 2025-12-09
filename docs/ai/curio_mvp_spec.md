@@ -1,8 +1,8 @@
 # Curio for Communities — MVP Specification
 
-> **Version:** 1.0
+> **Version:** 1.1
 > **Status:** Draft
-> **Last Updated:** 2024-12-09
+> **Last Updated:** 2025-12-09
 
 ---
 
@@ -58,30 +58,38 @@ Super Admin
 
 ### Super Admin
 
-**Purpose:** Platform-wide administration and oversight.
+**Purpose:** Platform-wide administration, oversight, and final approval of introduction rounds.
 
 | Permission | Description |
 |------------|-------------|
 | Manage organisations/communities | Create, edit, archive communities |
 | Manage Community Admins | Invite, remove, reassign admins to communities |
-| View all programmes | Read-only visibility across all community programmes |
+| View all programmes | Full visibility across all community programmes |
 | Access global settings | Configure platform-wide defaults (e.g., default tags, matching parameters) |
 | View platform analytics | Cross-community metrics and health dashboards |
+| **Approve rounds** | Review and approve matched rounds prepared by Community Admins |
+| **Mark rounds as Sent** | Only Super Admin can finalise a round and mark intros as "Sent" |
 
 **MVP Scope:** Basic CRUD for communities and admin assignment. Global settings and cross-community analytics are minimal.
 
+**Future Enhancement:** Ability to upload LinkedIn PDFs on behalf of participants (for bulk onboarding or profile enrichment).
+
 ### Community Admin
 
-**Purpose:** Manage programmes and participants within their assigned community(ies).
+**Purpose:** Configure programmes, manage participants, and prepare rounds for Super Admin approval.
 
 | Permission | Description |
 |------------|-------------|
 | Configure programmes | Create, edit, archive programmes within their community |
 | Manage participants | Invite participants, view profiles, remove members |
 | Trigger matching rounds | Initiate a new matching round for a programme |
-| View/copy intro messages | Access generated intro content for distribution |
+| View/copy intro messages | Access generated intro content for review |
+| Edit intro messages | Make adjustments to generated intros before approval |
+| Submit round for approval | Send a matched round to Super Admin for final review |
 | View programme analytics | See metrics for their programmes |
 | Manage exclusion lists | Add/remove participant pairs from the "never match" list |
+
+**Important (MVP):** Community Admins **cannot** mark a round as "Sent" or finalise introductions. All rounds must be approved by a Super Admin before intros are dispatched.
 
 **Note:** A Community Admin can manage multiple communities if assigned by a Super Admin.
 
@@ -103,11 +111,14 @@ Super Admin
 
 ### Onboarding Flow
 
-1. **Invitation:** Participant receives email invite from Community Admin with magic link.
-2. **Account creation:** Authenticate via magic link or OAuth (Google).
+1. **Invitation:** Participant receives email invite from Community Admin with a signup link.
+2. **Account creation:** Create account with email + password (MVP). Magic links and OAuth are future enhancements.
 3. **Profile completion:** Multi-step form collecting required and optional information.
-4. **Programme enrolment:** Confirm participation in the programme(s) they were invited to.
-5. **Confirmation:** Welcome screen with next steps.
+4. **Consent:** Explicit consent checkbox for using public LinkedIn data as input to matching and intro generation.
+5. **Programme enrolment:** Confirm participation in the programme(s) they were invited to.
+6. **Confirmation:** Welcome screen with next steps.
+
+**MVP Authentication:** Email + password only. Magic links and OAuth (Google, LinkedIn) are planned for future iterations.
 
 ### Profile Fields
 
@@ -119,14 +130,23 @@ Super Admin
 | `email` | string | Primary contact email (from auth) |
 | `role_title` | string | Current job title / role |
 | `organisation` | string | Current company or organisation name |
+| `linkedin_url` | string | LinkedIn profile URL (required for matching and intro generation) |
 | `location` | string | City, Country format |
 | `timezone` | string | IANA timezone (e.g., `Europe/London`) |
+
+#### Consent
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `linkedin_data_consent` | boolean | Explicit consent for using public LinkedIn data as input to matching and intro generation |
+| `consent_given_at` | timestamp | When consent was granted |
+
+**Note:** Participants must grant `linkedin_data_consent` to proceed with onboarding. This consent covers using publicly available LinkedIn information (name, headline, summary, experience) to improve match quality and generate more personalised intro messages.
 
 #### Professional Context
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `linkedin_url` | string (optional) | LinkedIn profile URL |
 | `professional_tags` | string[] | 3–5 tags from predefined list (e.g., "Product", "Sales", "Engineering", "Marketing", "Finance", "Operations", "Design", "Founder", "Investor") |
 | `intro_goals` | string[] | 1–3 goals from predefined list |
 
@@ -142,7 +162,18 @@ Super Admin
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `personal_interests` | string[] | 2–4 tags from predefined list |
+| `personal_interests` | object[] | 2–4 interests, each with a weight from 1–3 |
+
+Each interest entry contains:
+- `interest`: string (from predefined list)
+- `weight`: integer (1–3)
+
+**Weight Interpretation:**
+- **1** = Casual interest ("I enjoy this sometimes")
+- **2** = Moderate interest ("I'm fairly into this")
+- **3** = Strong passion ("This is a big part of my life")
+
+**UX Note:** Weights can be set by tapping/clicking an interest tile multiple times (1 tap = weight 1, 2 taps = weight 2, 3 taps = weight 3), or via a simple slider/selector.
 
 **Personal Interest Options (MVP):**
 - Travel
@@ -186,12 +217,38 @@ A **programme** is a recurring introduction series within a community (e.g., "Mo
 | `name` | string | Programme display name |
 | `description` | string | Short description shown to participants |
 | `community_id` | uuid | Parent community |
+| `programme_type` | enum | `community_connection`, `cohort_blitz`, `event` (see below) |
 | `audience_description` | string | Who this programme is for (displayed to invitees) |
-| `cadence` | enum | `weekly`, `fortnightly`, `monthly`, `quarterly` |
+| `cadence` | enum | See cadence options below |
 | `match_size` | enum | `pairs` (default), `pairs_with_trios` |
 | `intro_window_days` | integer | Suggested days for participants to connect (default: 14) |
 | `channel` | enum | `email_manual` (MVP); future: `email_auto`, `slack`, `teams` |
 | `is_active` | boolean | Whether programme is accepting new rounds |
+
+### Programme Types
+
+| Type | Description | Typical Cadence |
+|------|-------------|-----------------|
+| `community_connection` | Ongoing introductions for an established community. Members join and receive regular matches over time. | Monthly, quarterly |
+| `cohort_blitz` | Intensive intro programme for a fixed cohort (e.g., accelerator batch, new hire cohort). Multiple rounds in quick succession. | Daily, every 2–3 days, weekly |
+| `event` | One-off or time-boxed programme tied to a specific event (e.g., conference, retreat). Often a single round. | One-time, or 2–3 rounds during event |
+
+**MVP Note:** The data model supports all three programme types. The MVP UI is optimised for `community_connection`, but `cohort_blitz` and `event` can be configured by adjusting cadence and round settings. More specialised UI for intensive programmes is a future enhancement.
+
+### Cadence Options
+
+| Cadence | Description | Best For |
+|---------|-------------|----------|
+| `daily` | Every day | Cohort blitz (intensive) |
+| `every_2_days` | Every 2 days | Cohort blitz |
+| `every_3_days` | Every 3 days | Cohort blitz |
+| `weekly` | Once per week | Cohort blitz, active communities |
+| `fortnightly` | Every 2 weeks | Community connection |
+| `monthly` | Once per month | Community connection (default) |
+| `quarterly` | Once per quarter | Low-touch communities |
+| `one_time` | Single round only | Events |
+
+**Note:** Cadence is a guideline for expected round frequency. Admins manually trigger rounds in the MVP; cadence is used for scheduling reminders and setting participant expectations.
 
 ### Programme Rules
 
@@ -209,22 +266,27 @@ A **round** is a single execution of matching within a programme.
 | Field | Type | Description |
 |-------|------|-------------|
 | `round_number` | integer | Sequential round number within programme |
-| `status` | enum | `draft`, `matched`, `sent`, `completed` |
+| `status` | enum | `draft`, `matched`, `pending_approval`, `sent`, `completed` |
 | `triggered_at` | timestamp | When admin initiated matching |
 | `matched_at` | timestamp | When matching algorithm completed |
+| `submitted_for_approval_at` | timestamp (nullable) | When Community Admin submitted for approval |
+| `approved_by` | uuid (nullable) | Super Admin who approved the round |
 | `participant_count` | integer | Number of participants included |
 | `match_count` | integer | Number of matches (pairs + trios) generated |
 
 ### Round Lifecycle
 
 ```
-[Draft] → Admin triggers matching → [Matched] → Admin reviews/sends → [Sent] → Window closes → [Completed]
+[Draft] → Community Admin triggers matching → [Matched] → Community Admin reviews/edits → [Pending Approval] → Super Admin approves → [Sent] → Window closes → [Completed]
 ```
 
 1. **Draft:** Round is created; participants can still update opt-in status.
-2. **Matched:** Matching algorithm has run; matches and intro messages are generated.
-3. **Sent:** Admin has copied/sent intro messages to participants.
-4. **Completed:** Intro window has closed; round is archived.
+2. **Matched:** Matching algorithm has run; matches and intro messages are generated. Community Admin reviews and edits as needed.
+3. **Pending Approval:** Community Admin has submitted the round for Super Admin review.
+4. **Sent:** Super Admin has approved and marked the round as sent; intros are dispatched.
+5. **Completed:** Intro window has closed; round is archived.
+
+**MVP Note:** Only Super Admins can transition a round from "Pending Approval" to "Sent". Community Admins prepare rounds but cannot finalise them independently.
 
 ---
 
@@ -255,7 +317,32 @@ Calculated from overlap between participants on:
 
 | Factor | Weight within Personal | Description |
 |--------|------------------------|-------------|
-| `personal_interests` | 100% | Jaccard similarity of interest sets |
+| `personal_interests` | 100% | Weighted overlap of interests (see below) |
+
+**Weighted Interest Matching (MVP):**
+
+For personal interests, we use a simple weighted overlap approach:
+
+1. For each shared interest between two participants:
+   - Multiply the two weights together: `weight_A × weight_B`
+   - This gives a score from 1 (both casual) to 9 (both passionate)
+2. Sum the scores for all shared interests.
+3. Normalise by the maximum possible score (if all interests matched at max weight).
+
+**Formula:**
+```
+personal_score = Σ(weight_A × weight_B for shared interests) / max_possible_score
+```
+
+**Example:**
+- Alice: Travel (3), Music (2), Pets (1)
+- Bob: Travel (2), Gaming (3), Pets (2)
+- Shared interests: Travel, Pets
+- Score: (3×2) + (1×2) = 6 + 2 = 8
+- Max possible (if all Alice's interests matched at weight 3): 3×3 + 3×3 + 3×3 = 27
+- Personal score: 8/27 ≈ 0.30
+
+**Future Enhancement:** Rarity weighting — boost scores for matches on less common interests (e.g., if only 5% of participants select "Volunteering", a match on that interest is worth more than a match on "Travel" which 60% select).
 
 ### Matching Constraints (Hard Rules)
 
@@ -420,13 +507,21 @@ For trios, adjust:
 
 ### Admin Workflow (MVP)
 
-1. Admin triggers matching round.
+**Community Admin:**
+1. Community Admin triggers matching round.
 2. System generates matches and intro messages.
-3. Admin reviews matches in dashboard.
-4. Admin can edit intro messages if needed.
-5. Admin copies intro content (plain text or HTML).
-6. Admin pastes into email client and sends manually.
-7. Admin marks round as "Sent" in dashboard.
+3. Community Admin reviews matches in dashboard.
+4. Community Admin can edit intro messages if needed.
+5. Community Admin submits round for Super Admin approval.
+
+**Super Admin:**
+6. Super Admin reviews the pending round.
+7. Super Admin can request changes or approve.
+8. Upon approval, Super Admin copies intro content (plain text or HTML).
+9. Super Admin pastes into email client and sends manually.
+10. Super Admin marks round as "Sent" in dashboard.
+
+**Note:** Only Super Admins can finalise and mark rounds as "Sent".
 
 ---
 
@@ -470,6 +565,38 @@ For trios, adjust:
 | Details | Expand to see original intro message |
 
 **Pagination:** Show 10 most recent by default; load more on scroll.
+
+### Connections (MVP)
+
+Every introduction automatically creates a **connection record** in the participant's history. This provides a simple, persistent record of who each participant has been introduced to.
+
+#### Connection Record
+
+| Field | Description |
+|-------|-------------|
+| `connection_id` | Unique identifier |
+| `participant_ids` | The 2 (or 3) people in this connection |
+| `created_from_match_id` | Link to the original match/intro |
+| `programme_id` | Which programme created this connection |
+| `connected_at` | When the intro was sent |
+
+#### MVP Scope
+
+- **Automatic creation:** When a round is marked as "Sent", connection records are created for each match.
+- **Simple list view:** Participants see a chronological list of their connections in their Intro History.
+- **Basic details:** Each connection shows who they were connected with, when, and through which programme.
+- **Link to intro:** Participants can view the original intro message that initiated the connection.
+
+#### Future Enhancements (Not MVP)
+
+| Feature | Description |
+|---------|-------------|
+| Richer connection list | Filterable, searchable list with status (e.g., "Met", "In touch", "Lost contact") |
+| Directory view | Browse all community members with connection status indicators |
+| In-depth profile pages | Rich profiles showing connection history, mutual connections, and shared context |
+| Connection strength tracking | Track ongoing relationship depth and activity |
+| Connection notes | Personal notes participants can add about their connections |
+| Introduction requests | Request intros to specific people through mutual connections |
 
 ### Admin Dashboard
 
@@ -524,13 +651,14 @@ Summary cards:
 | Column | Description |
 |--------|-------------|
 | Round # | Sequential number |
-| Status | Draft, Matched, Sent, Completed |
+| Status | Draft, Matched, Pending Approval, Sent, Completed |
 | Date | When triggered |
 | Participants | Count |
 | Matches | Count (pairs + trios) |
-| Actions | View matches, Copy intros, Mark sent |
+| Actions | View matches, Edit intros, Submit for Approval |
 
 - "Start New Round" button (triggers matching)
+- **Note:** Community Admins see "Submit for Approval" action. Only Super Admins see "Approve & Mark Sent".
 
 **Round Detail View (expanded):**
 
@@ -743,12 +871,14 @@ profiles
 ├── user_id (uuid, FK → users)
 ├── role_title (string)
 ├── organisation (string)
-├── linkedin_url (string, nullable)
+├── linkedin_url (string, required)
+├── linkedin_data_consent (boolean)
+├── consent_given_at (timestamp)
 ├── location (string)
 ├── timezone (string)
 ├── professional_tags (string[])
 ├── intro_goals (string[])
-├── personal_interests (string[])
+├── personal_interests (jsonb[])  // [{interest: string, weight: 1-3}]
 ├── preferred_cadence (enum)
 ├── opt_in_status (boolean)
 ├── sitting_out_until (date, nullable)
@@ -765,8 +895,9 @@ programmes
 ├── community_id (uuid, FK → communities)
 ├── name (string)
 ├── description (text)
+├── programme_type (enum: community_connection, cohort_blitz, event)
 ├── audience_description (text)
-├── cadence (enum)
+├── cadence (enum: daily, every_2_days, every_3_days, weekly, fortnightly, monthly, quarterly, one_time)
 ├── match_size (enum)
 ├── intro_window_days (integer)
 ├── channel (enum)
@@ -789,9 +920,11 @@ rounds
 ├── id (uuid, PK)
 ├── programme_id (uuid, FK → programmes)
 ├── round_number (integer)
-├── status (enum: draft, matched, sent, completed)
+├── status (enum: draft, matched, pending_approval, sent, completed)
 ├── triggered_at (timestamp)
 ├── matched_at (timestamp, nullable)
+├── submitted_for_approval_at (timestamp, nullable)
+├── approved_by (uuid, FK → users, nullable)
 ├── sent_at (timestamp, nullable)
 ├── completed_at (timestamp, nullable)
 ├── participant_count (integer)
@@ -830,6 +963,14 @@ blocked_participants
 ├── blocker_id (uuid, FK → users)
 ├── blocked_id (uuid, FK → users)
 └── created_at (timestamp)
+
+connections
+├── id (uuid, PK)
+├── participant_ids (uuid[])
+├── created_from_match_id (uuid, FK → matches)
+├── programme_id (uuid, FK → programmes)
+├── connected_at (timestamp)
+└── created_at (timestamp)
 ```
 
 ### B. Predefined Tag Lists
@@ -862,29 +1003,61 @@ Volunteering / social impact, Tech & gadgets, Pets
 
 **Example 1: High Compatibility Pair**
 
-| Participant | Professional Tags | Intro Goals | Personal Interests |
-|-------------|-------------------|-------------|-------------------|
-| Alice | Product, Engineering | Peer support, Mentorship | Travel, Hiking |
-| Bob | Product, Design | Peer support, Hiring | Travel, Music |
+| Participant | Professional Tags | Intro Goals | Personal Interests (with weights) |
+|-------------|-------------------|-------------|-----------------------------------|
+| Alice | Product, Engineering | Peer support, Mentorship | Travel (3), Outdoors (2), Pets (1) |
+| Bob | Product, Design | Peer support, Hiring | Travel (2), Music (3), Pets (2) |
 
-- Professional tag overlap: {Product} → Jaccard = 1/3 = 0.33
+**Professional Score:**
+- Tag overlap: {Product} → Jaccard = 1/3 = 0.33
 - Goal overlap: {Peer support} → Jaccard = 1/3 = 0.33
-- Professional score: (0.33 × 0.5) + (0.33 × 0.5) = 0.33
-- Interest overlap: {Travel} → Jaccard = 1/3 = 0.33
-- Personal score: 0.33
+- Professional score: (0.33 × 0.5) + (0.33 × 0.5) = **0.33**
 
-**Final score:** (0.33 × 0.70) + (0.33 × 0.30) = **0.33**
+**Personal Score (Weighted):**
+- Shared interests: Travel, Pets
+- Travel: 3 × 2 = 6
+- Pets: 1 × 2 = 2
+- Sum: 6 + 2 = 8
+- Max possible (Alice's interests at max weight matched): 3×3 + 3×3 + 3×3 = 27
+- Personal score: 8/27 = **0.30**
 
-**Example 2: Low Compatibility Pair**
+**Final score:** (0.33 × 0.70) + (0.30 × 0.30) = 0.231 + 0.09 = **0.32**
 
-| Participant | Professional Tags | Intro Goals | Personal Interests |
-|-------------|-------------------|-------------|-------------------|
-| Carol | Sales, Marketing | Customers | Gaming, Music |
-| Dave | Engineering, Data | Hiring | Outdoors, Reading |
+**Example 2: Strong Interest Match**
+
+| Participant | Professional Tags | Intro Goals | Personal Interests (with weights) |
+|-------------|-------------------|-------------|-----------------------------------|
+| Eve | Sales, Marketing | Customers | Travel (3), Food (3) |
+| Frank | Product, Growth | Networking | Travel (3), Food (2), Music (1) |
+
+**Professional Score:**
+- Tag overlap: {} → Jaccard = 0
+- Goal overlap: {} → Jaccard = 0
+- Professional score: **0.00**
+
+**Personal Score (Weighted):**
+- Shared interests: Travel, Food
+- Travel: 3 × 3 = 9
+- Food: 3 × 2 = 6
+- Sum: 9 + 6 = 15
+- Max possible: 3×3 + 3×3 = 18
+- Personal score: 15/18 = **0.83**
+
+**Final score:** (0.00 × 0.70) + (0.83 × 0.30) = 0 + 0.25 = **0.25**
+
+*Note: Despite zero professional overlap, strong shared passions still produce a moderate score.*
+
+**Example 3: Low Compatibility Pair**
+
+| Participant | Professional Tags | Intro Goals | Personal Interests (with weights) |
+|-------------|-------------------|-------------|-----------------------------------|
+| Carol | Sales, Marketing | Customers | Gaming (2), Music (1) |
+| Dave | Engineering, Data | Hiring | Outdoors (3), Reading (2) |
 
 - Professional tag overlap: {} → Jaccard = 0
 - Goal overlap: {} → Jaccard = 0
-- Interest overlap: {} → Jaccard = 0
+- Interest overlap: {} → No shared interests
+- Personal score: 0
 
 **Final score:** **0.00**
 
@@ -895,3 +1068,4 @@ Volunteering / social impact, Tech & gadgets, Pets
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2024-12-09 | Claude | Initial MVP specification |
+| 1.1 | 2025-12-09 | Claude | Super Admin approval workflow; LinkedIn required with consent; weighted personal interests (1-3); programme types (community_connection, cohort_blitz, event); expanded cadence options; Connections subsection |
