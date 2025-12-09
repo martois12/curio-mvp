@@ -34,20 +34,23 @@ pnpm install
 
 ### Environment Setup
 
+Copy the example environment file and fill in your credentials:
+
 ```bash
 cp .env.example .env.local
-# Fill in your Supabase credentials and other secrets
 ```
 
 ### Run Development Server
+
+Start the development server at `http://localhost:3000`:
 
 ```bash
 pnpm dev
 ```
 
-App runs at `http://localhost:3000`
-
 ### Run Tests
+
+Run the test suite and code quality checks:
 
 ```bash
 pnpm test          # Run unit tests
@@ -99,7 +102,7 @@ Specs and planning documents live in `docs/ai/`. Key files:
 
 ### Never
 
-- **Never run `git commit` or `git push`** — the human will handle all commits
+- Never commit or push directly to the main branch. Claude Code may create and push `claude/*` branches; the human will review and merge them.
 - Never modify `.env` or `.env.local` files (suggest changes instead)
 - Never delete or overwrite migrations without explicit approval
 - Never install new dependencies without discussing the rationale first
