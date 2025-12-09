@@ -1,0 +1,3 @@
+# Database migration files go here
+# Create migrations using: supabase migration new <name>
+# Apply migrations using: supabase db push
