@@ -8,12 +8,20 @@ export default function Home() {
         <p className="text-xl text-gray-600 mb-8">
           Smart introductions for communities
         </p>
-        <Link
-          href="/dashboard"
-          className="rounded-md bg-blue-600 px-6 py-3 text-white font-medium hover:bg-blue-700 transition-colors"
-        >
-          Go to Dashboard
-        </Link>
+        <div className="flex flex-col gap-4">
+          <Link
+            href="/dashboard"
+            className="rounded-md bg-blue-600 px-6 py-3 text-white font-medium hover:bg-blue-700 transition-colors"
+          >
+            Go to Dashboard
+          </Link>
+          <Link
+            href="/admin/communities"
+            className="rounded-md bg-gray-600 px-6 py-3 text-white font-medium hover:bg-gray-700 transition-colors"
+          >
+            Admin: Communities
+          </Link>
+        </div>
       </div>
     </main>
   );
