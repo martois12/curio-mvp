@@ -1,17 +1,17 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import type { Community } from "@/types";
+import type { Organisation } from "@/types";
 
-export default async function AdminCommunitiesPage() {
+export default async function AdminOrganisationsPage() {
   const supabase = await createClient();
 
-  const { data: communities, error } = await supabase
-    .from("communities")
+  const { data: organisations, error } = await supabase
+    .from("organisations")
     .select("*")
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Error fetching communities:", error);
+    console.error("Error fetching organisations:", error);
   }
 
   const formatDate = (dateString: string) => {
@@ -32,15 +32,15 @@ export default async function AdminCommunitiesPage() {
           >
             &larr; Back to Dashboard
           </Link>
-          <h1 className="text-3xl font-bold">Communities</h1>
-          <p className="text-gray-600 mt-2">Manage all communities on the platform</p>
+          <h1 className="text-3xl font-bold">Organisations</h1>
+          <p className="text-gray-600 mt-2">Manage all organisations on the platform</p>
         </header>
 
-        {!communities || communities.length === 0 ? (
+        {!organisations || organisations.length === 0 ? (
           <div className="text-center py-12 bg-gray-50 rounded-lg">
-            <p className="text-gray-500 text-lg">No communities found</p>
+            <p className="text-gray-500 text-lg">No organisations found</p>
             <p className="text-gray-400 mt-2">
-              Communities will appear here once created.
+              Organisations will appear here once created.
             </p>
           </div>
         ) : (
@@ -63,27 +63,27 @@ export default async function AdminCommunitiesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {(communities as Community[]).map((community) => (
-                  <tr key={community.id} className="hover:bg-gray-50">
+                {(organisations as Organisation[]).map((organisation) => (
+                  <tr key={organisation.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 text-sm text-gray-900">
-                      {community.name}
+                      {organisation.name}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500 font-mono">
-                      {community.slug}
+                      {organisation.slug}
                     </td>
                     <td className="px-6 py-4 text-sm">
                       <span
                         className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                          community.is_active
+                          organisation.is_active
                             ? "bg-green-100 text-green-800"
                             : "bg-gray-100 text-gray-800"
                         }`}
                       >
-                        {community.is_active ? "Yes" : "No"}
+                        {organisation.is_active ? "Yes" : "No"}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
-                      {formatDate(community.created_at)}
+                      {formatDate(organisation.created_at)}
                     </td>
                   </tr>
                 ))}
