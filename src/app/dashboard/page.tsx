@@ -31,9 +31,9 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="border border-gray-200 rounded-lg p-6">
-            <h2 className="font-semibold mb-2">My Communities</h2>
+            <h2 className="font-semibold mb-2">My Groups</h2>
             <p className="text-sm text-gray-500">
-              See communities you belong to
+              See groups you belong to
             </p>
           </div>
         </div>
