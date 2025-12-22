@@ -41,7 +41,7 @@ super_admin
 | Migration | Status | Description |
 |-----------|--------|-------------|
 | `0001_init_curio_schema.sql` | **Legacy** | Uses old terminology (`communities`, `programmes`, `community_admin`, `participant`). Retained for backwards compatibility. |
-| `0002_rename_schema_to_spec_1_3.sql` | **Current** | Renames tables and columns to Spec 1.3 terminology |
+| `0002_rename_schema_to_spec_1_3.sql` | **Planned** | Renames tables and columns to Spec 1.3 terminology (not created yet) |
 
 ### Current Table Names (Spec 1.3)
 
@@ -115,5 +115,4 @@ interface Group {
 
 ## Important Note
 
-The file `supabase/migrations/0001_init_curio_schema.sql` contains legacy names by definition.
-The current schema naming is established by `supabase/migrations/0002_rename_schema_to_spec_1_3.sql`.
+The file `supabase/migrations/0001_init_curio_schema.sql` contains legacy names by definition. A Spec 1.3 rename migration is planned but has not been created yet.
