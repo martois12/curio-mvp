@@ -5,11 +5,15 @@
  * and imported here once configured.
  */
 
+// User roles matching the database enum
+export type UserRole = "super_admin" | "community_admin" | "participant";
+
 // Placeholder types - will be replaced with generated types
 export interface User {
   id: string;
   email: string;
   full_name: string | null;
+  role: UserRole;
   avatar_url: string | null;
   created_at: string;
 }
