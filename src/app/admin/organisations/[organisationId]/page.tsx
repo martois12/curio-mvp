@@ -2,10 +2,33 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import type { Organisation, Group, GroupType, Cadence } from "@/types";
+import { createInvite, listInvites } from "@/lib/invites";
+import type { Organisation, Group, GroupType, Cadence, GroupInvite } from "@/types";
 
 interface PageProps {
   params: Promise<{ organisationId: string }>;
+}
+
+async function generateInvite(formData: FormData): Promise<void> {
+  "use server";
+
+  const groupId = formData.get("groupId") as string;
+  const organisationId = formData.get("organisationId") as string;
+  const email = formData.get("email") as string | null;
+
+  if (!groupId) {
+    console.error("Group ID is required");
+    return;
+  }
+
+  const invite = await createInvite(groupId, email || undefined);
+
+  if (!invite) {
+    console.error("Failed to create invite");
+    return;
+  }
+
+  revalidatePath(`/admin/organisations/${organisationId}`);
 }
 
 async function createGroup(formData: FormData): Promise<void> {
@@ -90,6 +113,12 @@ export default async function OrganisationDetailPage({ params }: PageProps) {
     created_at: g.created_at,
     updated_at: g.updated_at,
   }));
+
+  // Fetch invites for all groups
+  const groupInvites: Record<string, GroupInvite[]> = {};
+  for (const group of mappedGroups) {
+    groupInvites[group.id] = await listInvites(group.id);
+  }
 
   const org = organisation as Organisation;
 
@@ -227,64 +256,107 @@ export default async function OrganisationDetailPage({ params }: PageProps) {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse bg-white shadow-sm rounded-lg overflow-hidden">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="text-left px-6 py-3 text-sm font-semibold text-gray-900">
-                      Name
-                    </th>
-                    <th className="text-left px-6 py-3 text-sm font-semibold text-gray-900">
-                      Type
-                    </th>
-                    <th className="text-left px-6 py-3 text-sm font-semibold text-gray-900">
-                      Cadence
-                    </th>
-                    <th className="text-left px-6 py-3 text-sm font-semibold text-gray-900">
-                      Active?
-                    </th>
-                    <th className="text-left px-6 py-3 text-sm font-semibold text-gray-900">
-                      Created
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {mappedGroups.map((group) => (
-                    <tr key={group.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 text-sm text-gray-900 font-medium">
+            <div className="space-y-6">
+              {mappedGroups.map((group) => {
+                const invites = groupInvites[group.id] || [];
+                return (
+                  <div
+                    key={group.id}
+                    className="bg-white shadow-sm rounded-lg overflow-hidden"
+                  >
+                    {/* Group Header */}
+                    <div className="px-6 py-4 border-b border-gray-200">
+                      <div className="flex items-start justify-between">
                         <div>
-                          {group.name}
+                          <h3 className="text-lg font-medium text-gray-900">
+                            {group.name}
+                          </h3>
                           {group.description && (
-                            <p className="text-gray-500 font-normal text-xs mt-0.5">
+                            <p className="text-sm text-gray-500 mt-1">
                               {group.description}
                             </p>
                           )}
+                          <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                            <span>{formatGroupType(group.group_type)}</span>
+                            <span>{formatCadence(group.cadence)}</span>
+                            <span
+                              className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${
+                                group.is_active
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-gray-100 text-gray-800"
+                              }`}
+                            >
+                              {group.is_active ? "Active" : "Inactive"}
+                            </span>
+                          </div>
                         </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
-                        {formatGroupType(group.group_type)}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
-                        {formatCadence(group.cadence)}
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        <span
-                          className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                            group.is_active
-                              ? "bg-green-100 text-green-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          {group.is_active ? "Yes" : "No"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
-                        {formatDate(group.created_at)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        <div className="text-sm text-gray-500">
+                          Created {formatDate(group.created_at)}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Invite Section */}
+                    <div className="px-6 py-4 bg-gray-50">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="text-sm font-medium text-gray-700">
+                          Invites ({invites.length})
+                        </h4>
+                        <form action={generateInvite} className="flex items-center gap-2">
+                          <input type="hidden" name="groupId" value={group.id} />
+                          <input type="hidden" name="organisationId" value={organisationId} />
+                          <button
+                            type="submit"
+                            className="px-3 py-1.5 text-sm bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                          >
+                            Generate Invite Link
+                          </button>
+                        </form>
+                      </div>
+
+                      {invites.length > 0 ? (
+                        <div className="space-y-2">
+                          {invites.map((invite) => (
+                            <div
+                              key={invite.id}
+                              className="bg-white px-3 py-2 rounded border border-gray-200 text-sm"
+                            >
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="flex items-center gap-2">
+                                  {invite.email && (
+                                    <span className="text-gray-700">
+                                      {invite.email}
+                                    </span>
+                                  )}
+                                  <span
+                                    className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${
+                                      invite.status === "joined"
+                                        ? "bg-green-100 text-green-800"
+                                        : "bg-yellow-100 text-yellow-800"
+                                    }`}
+                                  >
+                                    {invite.status}
+                                  </span>
+                                </div>
+                                <div className="text-gray-500 text-xs">
+                                  {formatDate(invite.created_at)}
+                                </div>
+                              </div>
+                              <code className="block font-mono text-xs bg-gray-100 px-2 py-1.5 rounded select-all cursor-pointer">
+                                /invite/{invite.token}
+                              </code>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500">
+                          No invites yet. Generate one to get started.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </section>

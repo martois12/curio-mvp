@@ -143,6 +143,30 @@ export interface Introduction {
 }
 
 // =============================================================================
+// Invites (Spec 1.3)
+// =============================================================================
+
+/**
+ * Invite status values.
+ * Stored as TEXT with CHECK constraint in database.
+ */
+export type InviteStatus = "invited" | "joined";
+
+/**
+ * Group invite for joining a group.
+ * DB table: invites (programme_id references programmes)
+ */
+export interface GroupInvite {
+  id: string;
+  group_id: string; // Spec 1.3 name (DB column: programme_id)
+  token: string;
+  email: string | null;
+  status: InviteStatus;
+  created_at: string;
+  joined_at: string | null;
+}
+
+// =============================================================================
 // Legacy Type Aliases (for backwards compatibility during migration)
 // =============================================================================
 
