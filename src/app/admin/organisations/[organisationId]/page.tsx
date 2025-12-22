@@ -14,7 +14,7 @@ async function createGroup(formData: FormData): Promise<void> {
   const organisationId = formData.get("organisationId") as string;
   const name = formData.get("name") as string;
   const description = formData.get("description") as string | null;
-  const groupType = (formData.get("groupType") as GroupType) || "community_connection";
+  const groupType = (formData.get("groupType") as GroupType) || "organisation_connection";
   const cadence = (formData.get("cadence") as Cadence) || "weekly";
 
   if (!name || name.trim() === "") {
@@ -29,12 +29,11 @@ async function createGroup(formData: FormData): Promise<void> {
 
   const supabase = await createClient();
 
-  // Insert into programmes table (Group maps to programmes in DB)
-  const { error } = await supabase.from("programmes").insert({
-    community_id: organisationId, // DB uses community_id
+  const { error } = await supabase.from("groups").insert({
+    organisation_id: organisationId,
     name: name.trim(),
     description: description?.trim() || null,
-    programme_type: groupType, // DB uses programme_type
+    group_type: groupType,
     cadence,
   });
 
@@ -50,9 +49,8 @@ export default async function OrganisationDetailPage({ params }: PageProps) {
   const { organisationId } = await params;
   const supabase = await createClient();
 
-  // Fetch organisation details (from communities table)
   const { data: organisation, error: orgError } = await supabase
-    .from("communities")
+    .from("organisations")
     .select("*")
     .eq("id", organisationId)
     .single();
@@ -62,11 +60,10 @@ export default async function OrganisationDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  // Fetch groups for this organisation (from programmes table)
   const { data: groups, error: groupsError } = await supabase
-    .from("programmes")
+    .from("groups")
     .select("*")
-    .eq("community_id", organisationId)
+    .eq("organisation_id", organisationId)
     .order("created_at", { ascending: false });
 
   if (groupsError) {
@@ -81,13 +78,12 @@ export default async function OrganisationDetailPage({ params }: PageProps) {
     });
   };
 
-  // Map DB fields to frontend types
   const mappedGroups: Group[] = (groups || []).map((g) => ({
     id: g.id,
-    organisation_id: g.community_id,
+    organisation_id: g.organisation_id,
     name: g.name,
     description: g.description,
-    group_type: g.programme_type as GroupType,
+    group_type: g.group_type as GroupType,
     audience_description: g.audience_description,
     cadence: g.cadence as Cadence,
     is_active: g.is_active,
@@ -177,10 +173,10 @@ export default async function OrganisationDetailPage({ params }: PageProps) {
                 <select
                   id="groupType"
                   name="groupType"
-                  defaultValue="community_connection"
+                  defaultValue="organisation_connection"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="community_connection">Organisation Connection</option>
+                  <option value="organisation_connection">Organisation Connection</option>
                   <option value="cohort_blitz">Cohort Blitz</option>
                   <option value="event">Event</option>
                 </select>
@@ -299,7 +295,7 @@ export default async function OrganisationDetailPage({ params }: PageProps) {
 
 function formatGroupType(type: GroupType): string {
   switch (type) {
-    case "community_connection":
+    case "organisation_connection":
       return "Organisation Connection";
     case "cohort_blitz":
       return "Cohort Blitz";

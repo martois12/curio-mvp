@@ -33,7 +33,7 @@ async function createOrganisation(formData: FormData): Promise<void> {
 
   // Check if slug already exists
   const { data: existing } = await supabase
-    .from("communities")
+    .from("organisations")
     .select("id")
     .eq("slug", slug)
     .single();
@@ -44,7 +44,7 @@ async function createOrganisation(formData: FormData): Promise<void> {
     finalSlug = `${slug}-${Date.now()}`;
   }
 
-  const { error } = await supabase.from("communities").insert({
+  const { error } = await supabase.from("organisations").insert({
     name: name.trim(),
     slug: finalSlug,
     description: description?.trim() || null,
@@ -62,7 +62,7 @@ export default async function AdminOrganisationsPage() {
   const supabase = await createClient();
 
   const { data: organisations, error } = await supabase
-    .from("communities")
+    .from("organisations")
     .select("*")
     .order("created_at", { ascending: false });
 

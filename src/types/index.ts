@@ -42,7 +42,6 @@ export interface Introduction {
   created_at: string;
 }
 
-// Spec 1.3 terminology: Organisation maps to "communities" table in DB
 export interface Organisation {
   id: string;
   name: string;
@@ -53,8 +52,7 @@ export interface Organisation {
   updated_at: string;
 }
 
-// Spec 1.3 terminology: Group maps to "programmes" table in DB
-export type GroupType = "community_connection" | "cohort_blitz" | "event";
+export type GroupType = "organisation_connection" | "cohort_blitz" | "event";
 export type Cadence =
   | "daily"
   | "every_2_days"
@@ -67,10 +65,10 @@ export type Cadence =
 
 export interface Group {
   id: string;
-  organisation_id: string; // maps to community_id in DB
+  organisation_id: string;
   name: string;
   description: string | null;
-  group_type: GroupType; // maps to programme_type in DB
+  group_type: GroupType;
   audience_description: string | null;
   cadence: Cadence;
   is_active: boolean;
