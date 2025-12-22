@@ -1,36 +1,119 @@
-# Curio source of truth, Spec 1.3
+# Curio Spec 1.3 — Source of Truth
 
-This repository is aligned to Spec 1.3 terminology.
+> **Version:** 1.3
+> **Last Updated:** 2025-12-22
 
-## Terminology
-Organisation, Group, User
+This document defines the canonical terminology for Curio as of Spec 1.3. All new code and documentation should use these terms.
 
-## Database tables
-organisations
-groups
-group_members
-organisation_admins
-blocked_users
+---
 
-## Key columns
-organisation_id
-group_id
-user_id
-user_ids
-user_1_id
-user_2_id
+## Terminology Mapping
 
-## Enums
-user_role values:
+| Spec 1.3 (Current) | Legacy (Spec 1.1) | Notes |
+|--------------------|-------------------|-------|
+| **organisation** | community | Top-level container entity |
+| **group** | programme | Introduction series within an organisation |
+| **organisation_admin** | community_admin | Admin role for an organisation |
+| **user** | participant | End-user role (member receiving introductions) |
+
+---
+
+## Current Role Hierarchy
+
+```
 super_admin
-organisation_admin
-user
+    └── organisation_admin
+            └── user
+```
 
-group_type values:
-organisation_connection
-cohort_blitz
-event
+| Role | Description |
+|------|-------------|
+| `super_admin` | Platform-wide administration |
+| `organisation_admin` | Manages a specific organisation and its groups |
+| `user` | Organisation member who receives introductions |
 
-## Important note
-The file supabase/migrations/0001_init_curio_schema.sql contains legacy names by definition.
-The current schema naming is established by supabase/migrations/0002_rename_schema_to_spec_1_3.sql.
+---
+
+## Database Schema Status
+
+### Migration Files
+
+| Migration | Status | Description |
+|-----------|--------|-------------|
+| `0001_init_curio_schema.sql` | **Legacy** | Uses old terminology (`communities`, `programmes`, `community_admin`, `participant`). Retained for backwards compatibility. |
+| `0002_rename_schema_to_spec_1_3.sql` | **Current** | Renames tables and columns to Spec 1.3 terminology |
+
+### Current Table Names (Spec 1.3)
+
+| Table | Description |
+|-------|-------------|
+| `organisations` | Top-level container entities |
+| `groups` | Introduction series within an organisation |
+| `group_members` | User membership in groups |
+| `organisation_admins` | Admin assignments to organisations |
+| `blocked_users` | User block relationships |
+
+### Key Columns
+
+- `organisation_id`
+- `group_id`
+- `user_id`
+- `user_ids`
+- `user_1_id`
+- `user_2_id`
+
+### Current Enum Values (Spec 1.3)
+
+| Enum | Values |
+|------|--------|
+| `user_role` | `super_admin`, `organisation_admin`, `user` |
+| `group_type` | `organisation_connection`, `cohort_blitz`, `event` |
+
+---
+
+## Application Code Conventions
+
+### TypeScript Types
+
+Use Spec 1.3 terminology in all TypeScript code:
+
+```typescript
+// Correct (Spec 1.3)
+type UserRole = "super_admin" | "organisation_admin" | "user";
+
+interface Organisation {
+  id: string;
+  name: string;
+  // ...
+}
+
+interface Group {
+  id: string;
+  organisation_id: string;
+  // ...
+}
+```
+
+---
+
+## Route Structure
+
+| Route | Purpose | Allowed Roles |
+|-------|---------|---------------|
+| `/admin/organisations` | Super admin platform management | `super_admin` |
+| `/org/*` | Organisation admin management | `super_admin`, `organisation_admin` |
+| `/dashboard` | User dashboard | All authenticated users |
+
+---
+
+## Documentation
+
+- **Current specs:** `docs/spec/` (Spec 1.3)
+- **Deprecated specs:** `docs/archive/` (Spec 1.1 and earlier)
+
+---
+
+## Important Note
+
+The file `supabase/migrations/0001_init_curio_schema.sql` contains legacy names by definition.
+The current schema naming is established by `supabase/migrations/0002_rename_schema_to_spec_1_3.sql`.
