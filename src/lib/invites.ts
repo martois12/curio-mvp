@@ -82,3 +82,64 @@ export async function listInvites(groupId: string): Promise<GroupInvite[]> {
     joined_at: row.joined_at,
   }));
 }
+
+/**
+ * Get an invite by its token.
+ *
+ * @param token - The unique invite token
+ * @returns The invite or null if not found
+ */
+export async function getInviteByToken(
+  token: string
+): Promise<GroupInvite | null> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("invites")
+    .select("*")
+    .eq("token", token)
+    .single();
+
+  if (error || !data) {
+    if (error?.code !== "PGRST116") {
+      // PGRST116 = no rows returned
+      console.error("Error fetching invite:", error);
+    }
+    return null;
+  }
+
+  return {
+    id: data.id,
+    group_id: data.programme_id,
+    token: data.token,
+    email: data.email,
+    status: data.status as InviteStatus,
+    created_at: data.created_at,
+    joined_at: data.joined_at,
+  };
+}
+
+/**
+ * Mark an invite as joined.
+ *
+ * @param inviteId - The invite ID
+ * @returns true if successful, false otherwise
+ */
+export async function markInviteJoined(inviteId: string): Promise<boolean> {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("invites")
+    .update({
+      status: "joined",
+      joined_at: new Date().toISOString(),
+    })
+    .eq("id", inviteId);
+
+  if (error) {
+    console.error("Error marking invite joined:", error);
+    return false;
+  }
+
+  return true;
+}
