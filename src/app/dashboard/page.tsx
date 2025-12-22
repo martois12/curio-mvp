@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getCurrentUser, isSuperAdmin, isCommunityAdminOrHigher } from "@/lib/rbac";
+import { getCurrentUser, isSuperAdmin, isOrganisationAdminOrHigher } from "@/lib/rbac";
 import { SignOutButton } from "./sign-out-button";
 
 export default async function DashboardPage() {
@@ -18,7 +18,7 @@ export default async function DashboardPage() {
                   className={`ml-2 inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${
                     user.role === "super_admin"
                       ? "bg-purple-100 text-purple-800"
-                      : user.role === "community_admin"
+                      : user.role === "organisation_admin"
                         ? "bg-blue-100 text-blue-800"
                         : "bg-gray-100 text-gray-800"
                   }`}
@@ -56,15 +56,15 @@ export default async function DashboardPage() {
             </p>
           </div>
           <div className="border border-gray-200 rounded-lg p-6">
-            <h2 className="font-semibold mb-2">My Communities</h2>
+            <h2 className="font-semibold mb-2">My Organisations</h2>
             <p className="text-sm text-gray-500">
-              See communities you belong to
+              See organisations you belong to
             </p>
           </div>
         </div>
 
         {/* Admin navigation */}
-        {user && isCommunityAdminOrHigher(user.role) && (
+        {user && isOrganisationAdminOrHigher(user.role) && (
           <div className="mt-8 border-t border-gray-200 pt-8">
             <h2 className="text-lg font-semibold mb-4">Admin Tools</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -73,9 +73,9 @@ export default async function DashboardPage() {
                   href="/admin/communities"
                   className="border border-gray-200 rounded-lg p-6 hover:bg-gray-50 transition-colors"
                 >
-                  <h3 className="font-semibold mb-2">Communities</h3>
+                  <h3 className="font-semibold mb-2">Organisations</h3>
                   <p className="text-sm text-gray-500">
-                    Manage all platform communities
+                    Manage all platform organisations
                   </p>
                 </Link>
               )}
@@ -85,7 +85,7 @@ export default async function DashboardPage() {
               >
                 <h3 className="font-semibold mb-2">My Organisation</h3>
                 <p className="text-sm text-gray-500">
-                  Manage your community programmes
+                  Manage your organisation&apos;s groups
                 </p>
               </Link>
             </div>

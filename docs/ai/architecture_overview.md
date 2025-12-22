@@ -1,5 +1,7 @@
 # Architecture Overview — Curio MVP
 
+> **Terminology:** This document uses Spec 1.3 terminology. See `docs/spec/source-of-truth.md` for the full terminology mapping.
+
 ## System Architecture
 
 ```
@@ -61,12 +63,16 @@
 - **Migrations:** SQL files in `supabase/migrations/`
 - **Security:** Row Level Security (RLS) policies
 
-**Core tables (planned):**
+**Core tables (Spec 1.3 names → current DB names):**
 - `users` — User profiles (extends Supabase auth.users)
-- `communities` — Community entities
-- `community_members` — User-community relationships + roles
+- `organisations` → `communities` — Organisation entities
+- `organisation_members` → `community_admins` — User-organisation relationships + roles
+- `groups` → `programmes` — Introduction groups within organisations
+- `group_members` → `programme_participants` — User enrolment in groups
 - `introductions` — Introduction requests and matches
 - `intro_preferences` — User preferences for introductions
+
+> **Note:** Database currently uses legacy table names from migration 0001. See `docs/spec/source-of-truth.md` for mapping.
 
 ### Authentication (Supabase Auth)
 
@@ -75,10 +81,10 @@
 - **Session:** JWT stored in httpOnly cookies
 - **Authorization:** RLS policies + middleware checks
 
-**Role hierarchy:**
-1. Super Admin — Full platform access
-2. Community Admin — Manage specific community
-3. Participant — Member of community
+**Role hierarchy (Spec 1.3):**
+1. Super Admin (`super_admin`) — Full platform access
+2. Organisation Admin (`organisation_admin`) — Manage specific organisation
+3. User (`user`) — Member of organisation
 
 ### Email & Notifications
 
@@ -91,7 +97,7 @@
 ### Introduction Request Flow
 
 ```
-1. Participant submits intro request
+1. User submits intro request
        │
        ▼
 2. API validates & stores in `introductions` table
@@ -103,7 +109,7 @@
 4. Matches stored, notifications sent to both parties
        │
        ▼
-5. Community Admin can review/approve (optional)
+5. Organisation Admin can review/approve (optional)
        │
        ▼
 6. Introduction email sent with context

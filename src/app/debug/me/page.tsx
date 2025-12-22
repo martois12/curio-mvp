@@ -38,7 +38,7 @@ export default async function DebugMePage() {
                     className={`inline-flex px-3 py-1 text-sm font-medium rounded-full ${
                       user.role === "super_admin"
                         ? "bg-purple-100 text-purple-800"
-                        : user.role === "community_admin"
+                        : user.role === "organisation_admin"
                           ? "bg-blue-100 text-blue-800"
                           : "bg-gray-100 text-gray-800"
                     }`}

@@ -16,7 +16,7 @@ export default async function OrgPage() {
           </Link>
           <h1 className="text-3xl font-bold">Organisation Management</h1>
           <p className="text-gray-600 mt-2">
-            Manage your community programmes and participants
+            Manage your organisation&apos;s groups and members
           </p>
         </header>
 
@@ -25,8 +25,8 @@ export default async function OrgPage() {
             Organisation management features coming soon
           </p>
           <p className="text-sm text-gray-500">
-            This page will allow community admins to manage their programmes,
-            participants, and matching rounds.
+            This page will allow organisation admins to manage their groups,
+            members, and matching rounds.
           </p>
         </div>
 

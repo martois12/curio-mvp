@@ -1,10 +1,18 @@
 import { createClient } from "@/lib/supabase/server";
+import {
+  type UserRole,
+  type LegacyUserRole,
+  mapLegacyRole,
+  mapToLegacyRole,
+} from "@/types";
 
 /**
- * User roles matching the database enum
- * Hierarchy: super_admin > community_admin > participant
+ * RBAC (Role-Based Access Control) module for Curio.
+ *
+ * Uses Spec 1.3 terminology (UserRole: super_admin, organisation_admin, user).
+ * Database stores legacy roles (super_admin, community_admin, participant).
+ * This module handles the mapping between them.
  */
-export type UserRole = "super_admin" | "community_admin" | "participant";
 
 export interface AuthenticatedUser {
   id: string;
@@ -23,6 +31,7 @@ export interface RBACResult {
 /**
  * Gets the current authenticated user and their role from the database.
  * Returns null if not authenticated.
+ * Maps legacy database roles to Spec 1.3 roles.
  */
 export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
   const supabase = await createClient();
@@ -36,7 +45,7 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
     return null;
   }
 
-  // Fetch user role from the users table
+  // Fetch user role from the users table (returns legacy role)
   const { data: userData, error: userError } = await supabase
     .from("users")
     .select("role, full_name")
@@ -45,19 +54,23 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
 
   if (userError || !userData) {
     // User exists in auth but not in users table
-    // Default to participant role for safety
+    // Default to 'user' role for safety
     return {
       id: authUser.id,
       email: authUser.email ?? "",
-      role: "participant",
+      role: "user",
       fullName: null,
     };
   }
 
+  // Map legacy database role to Spec 1.3 role
+  const legacyRole = userData.role as LegacyUserRole;
+  const role = mapLegacyRole(legacyRole);
+
   return {
     id: authUser.id,
     email: authUser.email ?? "",
-    role: userData.role as UserRole,
+    role,
     fullName: userData.full_name,
   };
 }
@@ -106,20 +119,25 @@ export function isSuperAdmin(role: UserRole): boolean {
 }
 
 /**
- * Checks if a role has community_admin or higher privileges.
+ * Checks if a role has organisation_admin or higher privileges.
  */
-export function isCommunityAdminOrHigher(role: UserRole): boolean {
-  return role === "super_admin" || role === "community_admin";
+export function isOrganisationAdminOrHigher(role: UserRole): boolean {
+  return role === "super_admin" || role === "organisation_admin";
 }
 
 /**
+ * @deprecated Use isOrganisationAdminOrHigher instead.
+ */
+export const isCommunityAdminOrHigher = isOrganisationAdminOrHigher;
+
+/**
  * Route protection configuration.
- * Maps route patterns to allowed roles.
+ * Maps route patterns to allowed roles (Spec 1.3 terminology).
  */
 export const ROUTE_PERMISSIONS: Record<string, UserRole[]> = {
   "/admin": ["super_admin"],
-  "/org": ["super_admin", "community_admin"],
-  "/dashboard": ["super_admin", "community_admin", "participant"],
+  "/org": ["super_admin", "organisation_admin"],
+  "/dashboard": ["super_admin", "organisation_admin", "user"],
 };
 
 /**
@@ -137,3 +155,7 @@ export function getAllowedRolesForRoute(pathname: string): UserRole[] | null {
   // Route is public
   return null;
 }
+
+// Re-export mapping functions for use elsewhere
+export { mapLegacyRole, mapToLegacyRole };
+export type { UserRole, LegacyUserRole };

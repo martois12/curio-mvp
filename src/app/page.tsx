@@ -6,7 +6,7 @@ export default function Home() {
       <div className="text-center">
         <h1 className="text-4xl font-bold mb-4">Curio</h1>
         <p className="text-xl text-gray-600 mb-8">
-          Smart introductions for communities
+          Smart introductions for organisations
         </p>
         <div className="flex flex-col gap-4">
           <Link
@@ -19,7 +19,7 @@ export default function Home() {
             href="/admin/communities"
             className="rounded-md bg-gray-600 px-6 py-3 text-white font-medium hover:bg-gray-700 transition-colors"
           >
-            Admin: Communities
+            Admin: Organisations
           </Link>
         </div>
       </div>
