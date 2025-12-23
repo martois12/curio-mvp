@@ -113,6 +113,17 @@ interface Group {
 
 ---
 
+## Do Not Drift Terminology
+
+**Milestones reference:** All milestone definitions and user stories are in [`docs/spec/milestones.md`](./milestones.md).
+
+When writing code, documentation, or specs:
+- Use **organisations**, **groups**, and **users** — never communities, programmes, or participants.
+- If you see legacy terminology in older files, do not propagate it to new code.
+- The milestones file is the single source of truth for feature scope and user stories.
+
+---
+
 ## Important Note
 
 The file `supabase/migrations/0001_init_curio_schema.sql` contains legacy names by definition. A Spec 1.3 rename migration is planned but has not been created yet.
