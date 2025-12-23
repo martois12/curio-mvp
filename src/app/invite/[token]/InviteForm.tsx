@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { Button, Input, FormField, Alert } from "@/components/ui";
 
 interface InviteFormProps {
   inviteId: string;
@@ -96,98 +98,64 @@ export default function InviteForm({ inviteId, groupId }: InviteFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-md p-3 text-sm text-red-600">
-          {error}
-        </div>
-      )}
+      {error && <Alert variant="error">{error}</Alert>}
 
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label
-            htmlFor="firstName"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            First Name <span className="text-red-500">*</span>
-          </label>
-          <input
+        <FormField label="First Name" htmlFor="firstName" required>
+          <Input
             type="text"
             id="firstName"
             name="firstName"
             required
             autoComplete="given-name"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
-        </div>
-        <div>
-          <label
-            htmlFor="lastName"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Last Name <span className="text-red-500">*</span>
-          </label>
-          <input
+        </FormField>
+        <FormField label="Last Name" htmlFor="lastName" required>
+          <Input
             type="text"
             id="lastName"
             name="lastName"
             required
             autoComplete="family-name"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
-        </div>
+        </FormField>
       </div>
 
-      <div>
-        <label
-          htmlFor="email"
-          className="block text-sm font-medium text-gray-700 mb-1"
-        >
-          Email <span className="text-red-500">*</span>
-        </label>
-        <input
+      <FormField label="Email" htmlFor="email" required>
+        <Input
           type="email"
           id="email"
           name="email"
           required
           autoComplete="email"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         />
-      </div>
+      </FormField>
 
-      <div>
-        <label
-          htmlFor="password"
-          className="block text-sm font-medium text-gray-700 mb-1"
-        >
-          Password <span className="text-red-500">*</span>
-        </label>
-        <input
+      <FormField
+        label="Password"
+        htmlFor="password"
+        required
+        hint="Must be at least 6 characters"
+      >
+        <Input
           type="password"
           id="password"
           name="password"
           required
           minLength={6}
           autoComplete="new-password"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         />
-        <p className="text-xs text-gray-500 mt-1">
-          Must be at least 6 characters
-        </p>
-      </div>
+      </FormField>
 
-      <button
-        type="submit"
-        disabled={isLoading}
-        className="w-full px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {isLoading ? "Creating account..." : "Create Account & Join"}
-      </button>
+      <Button type="submit" isLoading={isLoading} className="w-full">
+        Create Account & Join
+      </Button>
 
       <p className="text-center text-sm text-gray-500">
         Already have an account?{" "}
-        <a href="/login" className="text-blue-600 hover:text-blue-800">
+        <Link href="/login" className="text-blue-600 hover:text-blue-800 font-medium">
           Log in
-        </a>
+        </Link>
       </p>
     </form>
   );

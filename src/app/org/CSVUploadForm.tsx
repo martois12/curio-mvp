@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { bulkCreateInvites, type BulkInviteResult } from "./actions";
+import { Button, Alert } from "@/components/ui";
 
 interface CSVUploadFormProps {
   groupId: string;
@@ -76,19 +77,20 @@ export default function CSVUploadForm({
           </p>
         </div>
 
-        <button
+        <Button
           type="submit"
-          disabled={isUploading}
-          className="px-3 py-1.5 text-sm bg-green-600 text-white font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          variant="secondary"
+          size="sm"
+          isLoading={isUploading}
         >
-          {isUploading ? "Uploading..." : "Upload CSV"}
-        </button>
+          Upload CSV
+        </Button>
       </form>
 
       {error && (
-        <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-600">
+        <Alert variant="error" className="mt-3">
           {error}
-        </div>
+        </Alert>
       )}
 
       {result && (
