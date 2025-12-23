@@ -1,17 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
-import {
-  type UserRole,
-  type LegacyUserRole,
-  mapLegacyRole,
-  mapToLegacyRole,
-} from "@/types";
+import type { UserRole } from "@/types";
 
 /**
  * RBAC (Role-Based Access Control) module for Curio.
  *
- * Uses Spec 1.3 terminology (UserRole: super_admin, organisation_admin, user).
- * Database stores legacy roles (super_admin, community_admin, participant).
- * This module handles the mapping between them.
+ * Roles: super_admin, organisation_admin, user
  */
 
 export interface AuthenticatedUser {
@@ -31,7 +24,6 @@ export interface RBACResult {
 /**
  * Gets the current authenticated user and their role from the database.
  * Returns null if not authenticated.
- * Maps legacy database roles to Spec 1.3 roles.
  */
 export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
   const supabase = await createClient();
@@ -45,7 +37,7 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
     return null;
   }
 
-  // Fetch user role from the users table (returns legacy role)
+  // Fetch user role from the users table
   const { data: userData, error: userError } = await supabase
     .from("users")
     .select("role, full_name")
@@ -63,14 +55,10 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
     };
   }
 
-  // Map legacy database role to Spec 1.3 role
-  const legacyRole = userData.role as LegacyUserRole;
-  const role = mapLegacyRole(legacyRole);
-
   return {
     id: authUser.id,
     email: authUser.email ?? "",
-    role,
+    role: userData.role as UserRole,
     fullName: userData.full_name,
   };
 }
@@ -126,17 +114,12 @@ export function isOrganisationAdminOrHigher(role: UserRole): boolean {
 }
 
 /**
- * @deprecated Use isOrganisationAdminOrHigher instead.
- */
-export const isCommunityAdminOrHigher = isOrganisationAdminOrHigher;
-
-/**
  * Route protection configuration.
- * Maps route patterns to allowed roles (Spec 1.3 terminology).
+ * Maps route patterns to allowed roles.
  */
 export const ROUTE_PERMISSIONS: Record<string, UserRole[]> = {
   "/admin": ["super_admin"],
-  "/org": ["super_admin", "organisation_admin"],
+  "/org": ["super_admin", "organisation_admin", "user"],
   "/dashboard": ["super_admin", "organisation_admin", "user"],
 };
 
@@ -156,6 +139,5 @@ export function getAllowedRolesForRoute(pathname: string): UserRole[] | null {
   return null;
 }
 
-// Re-export mapping functions for use elsewhere
-export { mapLegacyRole, mapToLegacyRole };
-export type { UserRole, LegacyUserRole };
+// Re-export UserRole for convenience
+export type { UserRole };

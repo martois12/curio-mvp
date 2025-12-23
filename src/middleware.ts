@@ -1,24 +1,20 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import type { LegacyUserRole } from "@/types";
+import type { UserRole } from "@/types";
 
 /**
  * Middleware for route protection based on user roles.
- *
- * Note: This middleware compares against LEGACY role values from the database
- * (super_admin, community_admin, participant) since it queries the DB directly.
- * Application code should use Spec 1.3 roles via the RBAC module.
  */
 
 /**
  * Route protection configuration.
- * Maps route patterns to allowed legacy roles (from database).
+ * Maps route patterns to allowed roles.
  */
-const PROTECTED_ROUTES: Record<string, LegacyUserRole[]> = {
+const PROTECTED_ROUTES: Record<string, UserRole[]> = {
   "/admin": ["super_admin"],
-  "/org": ["super_admin", "community_admin"],
-  "/dashboard": ["super_admin", "community_admin", "participant"],
-  "/debug/me": ["super_admin", "community_admin", "participant"],
+  "/org": ["super_admin", "organisation_admin", "user"],
+  "/dashboard": ["super_admin", "organisation_admin", "user"],
+  "/debug/me": ["super_admin", "organisation_admin", "user"],
 };
 
 /**
@@ -30,7 +26,7 @@ const AUTH_ROUTES = ["/login"];
  * Determines the allowed roles for a given pathname.
  * Returns null if the route is public.
  */
-function getAllowedRolesForRoute(pathname: string): LegacyUserRole[] | null {
+function getAllowedRolesForRoute(pathname: string): UserRole[] | null {
   for (const [routePattern, roles] of Object.entries(PROTECTED_ROUTES)) {
     if (pathname === routePattern || pathname.startsWith(`${routePattern}/`)) {
       return roles;
@@ -121,8 +117,8 @@ export async function middleware(request: NextRequest) {
     .eq("id", authUser.id)
     .single();
 
-  // Default to participant if user record not found (legacy role value)
-  const userRole: LegacyUserRole = userData?.role ?? "participant";
+  // Default to user if user record not found
+  const userRole: UserRole = userData?.role ?? "user";
 
   // Check if user's role is allowed
   if (!allowedRoles.includes(userRole)) {

@@ -1,7 +1,5 @@
 /**
  * Server-side helpers for group invites.
- *
- * Uses legacy DB column name (programme_id) but returns Spec 1.3 types (group_id).
  */
 
 import { createClient } from "@/lib/supabase/server";
@@ -11,7 +9,7 @@ import { randomBytes } from "crypto";
 /**
  * Create a new invite for a group.
  *
- * @param groupId - The group ID (Spec 1.3 terminology)
+ * @param groupId - The group ID
  * @param email - Optional email address for targeted invite
  * @returns The created invite or null on error
  */
@@ -27,7 +25,7 @@ export async function createInvite(
   const { data, error } = await supabase
     .from("invites")
     .insert({
-      programme_id: groupId, // DB uses legacy column name
+      group_id: groupId,
       token,
       email: email?.trim() || null,
     })
@@ -39,10 +37,9 @@ export async function createInvite(
     return null;
   }
 
-  // Map DB row to Spec 1.3 type
   return {
     id: data.id,
-    group_id: data.programme_id,
+    group_id: data.group_id,
     token: data.token,
     email: data.email,
     status: data.status as InviteStatus,
@@ -54,7 +51,7 @@ export async function createInvite(
 /**
  * List all invites for a group.
  *
- * @param groupId - The group ID (Spec 1.3 terminology)
+ * @param groupId - The group ID
  * @returns Array of invites, ordered by created_at descending
  */
 export async function listInvites(groupId: string): Promise<GroupInvite[]> {
@@ -63,7 +60,7 @@ export async function listInvites(groupId: string): Promise<GroupInvite[]> {
   const { data, error } = await supabase
     .from("invites")
     .select("*")
-    .eq("programme_id", groupId) // DB uses legacy column name
+    .eq("group_id", groupId)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -71,10 +68,9 @@ export async function listInvites(groupId: string): Promise<GroupInvite[]> {
     return [];
   }
 
-  // Map DB rows to Spec 1.3 types
   return (data || []).map((row) => ({
     id: row.id,
-    group_id: row.programme_id,
+    group_id: row.group_id,
     token: row.token,
     email: row.email,
     status: row.status as InviteStatus,
@@ -110,7 +106,7 @@ export async function getInviteByToken(
 
   return {
     id: data.id,
-    group_id: data.programme_id,
+    group_id: data.group_id,
     token: data.token,
     email: data.email,
     status: data.status as InviteStatus,

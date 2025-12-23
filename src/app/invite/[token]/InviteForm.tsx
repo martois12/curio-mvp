@@ -45,12 +45,12 @@ export default function InviteForm({ inviteId, groupId }: InviteFormProps) {
 
       const userId = authData.user.id;
 
-      // 2. Create user record (role defaults to 'participant' in DB)
+      // 2. Create user record
       const { error: userError } = await supabase.from("users").insert({
         id: userId,
         email,
         full_name: fullName,
-        role: "participant",
+        role: "user",
       });
 
       if (userError) {
@@ -58,11 +58,11 @@ export default function InviteForm({ inviteId, groupId }: InviteFormProps) {
         // Don't throw - auth account exists, user can still proceed
       }
 
-      // 3. Add to group (programme_participants uses legacy naming)
+      // 3. Add to group
       const { error: memberError } = await supabase
-        .from("programme_participants")
+        .from("group_members")
         .insert({
-          programme_id: groupId,
+          group_id: groupId,
           user_id: userId,
           status: "active",
         });
