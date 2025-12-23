@@ -29,12 +29,24 @@ See `docs/spec/source-of-truth.md` for the complete terminology mapping and sche
 
 ---
 
+### Progress Tracking
+
+| File | Purpose |
+|------|---------|
+| `milestones.md` | Current status and planned work (source of truth) |
+| `progress-log.md` | Append-only narrative history of what shipped |
+
+**Rule:** Keep `milestones.md` updated as the plan evolves. Optionally add a `progress-log.md` entry whenever a meaningful slice ships.
+
+---
+
 ## Files in This Directory
 
 | File | Purpose |
 |------|---------|
 | `milestones.docx` | Milestones & user stories (Word format) |
 | `milestones.md` | Milestones & user stories (Markdown format) |
+| `progress-log.md` | Append-only history of milestone progress |
 | `source-of-truth.md` | Terminology mapping & schema reference |
 
 ---
