@@ -121,6 +121,7 @@ export const ROUTE_PERMISSIONS: Record<string, UserRole[]> = {
   "/admin": ["super_admin"],
   "/org": ["super_admin", "organisation_admin", "user"],
   "/dashboard": ["super_admin", "organisation_admin", "user"],
+  "/groups": ["super_admin", "organisation_admin", "user"],
 };
 
 /**

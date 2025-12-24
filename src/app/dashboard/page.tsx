@@ -63,12 +63,14 @@ export default async function DashboardPage() {
             </CardDescription>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent>
-            <CardTitle as="h3">My Groups</CardTitle>
-            <CardDescription>See groups you belong to</CardDescription>
-          </CardContent>
-        </Card>
+        <Link href="/groups">
+          <Card className="hover:bg-gray-50 transition-colors cursor-pointer">
+            <CardContent>
+              <CardTitle as="h3">My Groups</CardTitle>
+              <CardDescription>See groups you belong to</CardDescription>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* Admin navigation */}

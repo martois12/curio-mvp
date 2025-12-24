@@ -126,3 +126,69 @@ export interface GroupInvite {
   created_at: string;
   joined_at: string | null;
 }
+
+// =============================================================================
+// Group Membership
+// =============================================================================
+
+/**
+ * Group membership status.
+ */
+export type GroupMemberStatus = "active" | "inactive";
+
+/**
+ * Group membership record.
+ * DB table: group_members
+ */
+export interface GroupMember {
+  id: string;
+  group_id: string;
+  user_id: string;
+  status: GroupMemberStatus;
+  created_at: string;
+}
+
+/**
+ * Group with membership info for user display.
+ */
+export interface UserGroup {
+  id: string;
+  name: string;
+  description: string | null;
+  is_active: boolean;
+  membership_id: string;
+  membership_status: GroupMemberStatus;
+  organisation_name: string;
+}
+
+// =============================================================================
+// Group Join Links
+// =============================================================================
+
+/**
+ * Multi-use join link for a group.
+ * DB table: group_join_links
+ */
+export interface GroupJoinLink {
+  id: string;
+  group_id: string;
+  organisation_id: string;
+  token: string;
+  is_active: boolean;
+  max_uses: number | null;
+  uses_count: number;
+  expires_at: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+/**
+ * Record of a user redeeming a join link.
+ * DB table: group_join_link_redemptions
+ */
+export interface GroupJoinLinkRedemption {
+  id: string;
+  join_link_id: string;
+  user_id: string;
+  redeemed_at: string;
+}

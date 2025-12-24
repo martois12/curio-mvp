@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createInvite } from "@/lib/invites";
+import { createJoinLink } from "@/lib/join-links";
 import { getCurrentUser } from "@/lib/rbac";
 import { isAdminOfOrganisation } from "@/lib/org-admin";
 
@@ -177,4 +178,42 @@ export async function bulkCreateInvites(
 
   revalidatePath("/org");
   return result;
+}
+
+/**
+ * Generate or regenerate a join link for a group.
+ * This creates a new link and deactivates any existing ones.
+ */
+export async function generateJoinLinkAction(
+  formData: FormData
+): Promise<{ success: boolean; error?: string }> {
+  const groupId = formData.get("groupId") as string;
+  const organisationId = formData.get("organisationId") as string;
+
+  if (!groupId || !organisationId) {
+    return { success: false, error: "Missing required fields" };
+  }
+
+  // Verify user has access to this organisation
+  const user = await getCurrentUser();
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  // Super admins can access any org, org admins need explicit check
+  if (user.role !== "super_admin") {
+    const isAdmin = await isAdminOfOrganisation(user.id, organisationId);
+    if (!isAdmin) {
+      return { success: false, error: "Not authorised for this organisation" };
+    }
+  }
+
+  const joinLink = await createJoinLink(groupId, organisationId, user.id);
+
+  if (!joinLink) {
+    return { success: false, error: "Failed to create join link" };
+  }
+
+  revalidatePath("/org");
+  return { success: true };
 }

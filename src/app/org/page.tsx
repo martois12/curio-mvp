@@ -2,9 +2,11 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/rbac";
 import { getAdminOrganisations, getOrganisationGroups } from "@/lib/org-admin";
 import { listInvites } from "@/lib/invites";
+import { getActiveJoinLink } from "@/lib/join-links";
 import { generateInvite } from "./actions";
 import CSVUploadForm from "./CSVUploadForm";
-import type { Organisation, Group, GroupInvite } from "@/types";
+import JoinLinkSection from "./JoinLinkSection";
+import type { Organisation, Group, GroupInvite, GroupJoinLink } from "@/types";
 import {
   PageShell,
   PageHeader,
@@ -33,22 +35,25 @@ export default async function OrgPage() {
   // Get organisations this admin can manage
   const organisations = await getAdminOrganisations(user.id);
 
-  // Fetch groups and invites for each organisation
+  // Fetch groups, invites, and join links for each organisation
   const orgData: {
     org: Organisation;
     groups: Group[];
     groupInvites: Record<string, GroupInvite[]>;
+    groupJoinLinks: Record<string, GroupJoinLink | null>;
   }[] = [];
 
   for (const org of organisations) {
     const groups = await getOrganisationGroups(org.id);
     const groupInvites: Record<string, GroupInvite[]> = {};
+    const groupJoinLinks: Record<string, GroupJoinLink | null> = {};
 
     for (const group of groups) {
       groupInvites[group.id] = await listInvites(group.id);
+      groupJoinLinks[group.id] = await getActiveJoinLink(group.id);
     }
 
-    orgData.push({ org, groups, groupInvites });
+    orgData.push({ org, groups, groupInvites, groupJoinLinks });
   }
 
   const formatDate = (dateString: string) => {
@@ -76,7 +81,7 @@ export default async function OrgPage() {
         />
       ) : (
         <div className="space-y-8">
-          {orgData.map(({ org, groups, groupInvites }) => (
+          {orgData.map(({ org, groups, groupInvites, groupJoinLinks }) => (
             <Card key={org.id}>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -188,6 +193,13 @@ export default async function OrgPage() {
                             <CSVUploadForm
                               groupId={group.id}
                               organisationId={org.id}
+                            />
+
+                            {/* Join Link */}
+                            <JoinLinkSection
+                              groupId={group.id}
+                              organisationId={org.id}
+                              joinLink={groupJoinLinks[group.id]}
                             />
                           </div>
                         </div>
